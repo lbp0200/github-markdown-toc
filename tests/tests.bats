@@ -26,10 +26,34 @@ load test_helper
     assert_equal "${lines[16]}" "* [Docker](#docker)"
     assert_equal "${lines[17]}" "   * [Local](#local)"
     assert_equal "${lines[18]}" "   * [Public](#public)"
-    assert_equal "${lines[19]}" "Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)"
+    assert_equal "${lines[19]}" "<!-- Created by https://github.com/ekalinin/github-markdown-toc -->"
 
 }
 
+@test "TOC for local README.md with skip headers" {
+    run $BATS_TEST_DIRNAME/../gh-md-toc --skip-header README.md
+    assert_success
+
+    assert_equal "${lines[0]}"  "Table of Contents"
+    assert_equal "${lines[1]}"  "================="
+    assert_equal "${lines[2]}"  "* [Installation](#installation)"
+    assert_equal "${lines[3]}"  "* [Usage](#usage)"
+    assert_equal "${lines[4]}"  "   * [STDIN](#stdin)"
+    assert_equal "${lines[5]}"  "   * [Local files](#local-files)"
+    assert_equal "${lines[6]}"  "   * [Remote files](#remote-files)"
+    assert_equal "${lines[7]}"  "   * [Multiple files](#multiple-files)"
+    assert_equal "${lines[8]}" "   * [Combo](#combo)"
+    assert_equal "${lines[9]}" "   * [Auto insert and update TOC](#auto-insert-and-update-toc)"
+    assert_equal "${lines[10]}" "   * [GitHub token](#github-token)"
+    assert_equal "${lines[11]}" "   * [TOC generation with Github Actions](#toc-generation-with-github-actions)"
+    assert_equal "${lines[12]}" "* [Tests](#tests)"
+    assert_equal "${lines[13]}" "* [Dependency](#dependency)"
+    assert_equal "${lines[14]}" "* [Docker](#docker)"
+    assert_equal "${lines[15]}" "   * [Local](#local)"
+    assert_equal "${lines[16]}" "   * [Public](#public)"
+    assert_equal "${lines[17]}" "<!-- Created by https://github.com/ekalinin/github-markdown-toc -->"
+
+}
 @test "TOC for remote README.md" {
     run $BATS_TEST_DIRNAME/../gh-md-toc https://github.com/ekalinin/sitemap.js/blob/6bc3eb12c898c1037a35a11b2eb24ababdeb3580/README.md
     assert_success
@@ -40,7 +64,7 @@ load test_helper
     assert_equal "${lines[3]}"  "   * [Installation](#installation)"
     assert_equal "${lines[4]}"  "   * [Usage](#usage)"
     assert_equal "${lines[5]}"  "   * [License](#license)"
-    assert_equal "${lines[6]}"  "Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)"
+    assert_equal "${lines[6]}"  "<!-- Created by https://github.com/ekalinin/github-markdown-toc -->"
 }
 
 @test "TOC for mixed README.md (remote/local)" {
@@ -70,7 +94,7 @@ load test_helper
     assert_equal "${lines[18]}"  "   * [Installation](https://github.com/ekalinin/sitemap.js/blob/6bc3eb12c898c1037a35a11b2eb24ababdeb3580/README.md#installation)"
     assert_equal "${lines[19]}"  "   * [Usage](https://github.com/ekalinin/sitemap.js/blob/6bc3eb12c898c1037a35a11b2eb24ababdeb3580/README.md#usage)"
     assert_equal "${lines[20]}"  "   * [License](https://github.com/ekalinin/sitemap.js/blob/6bc3eb12c898c1037a35a11b2eb24ababdeb3580/README.md#license)"
-    assert_equal "${lines[21]}"  "Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)"
+    assert_equal "${lines[21]}"  "<!-- Created by https://github.com/ekalinin/github-markdown-toc -->"
 }
 
 @test "TOC for markdown from stdin" {
@@ -94,35 +118,58 @@ load test_helper
     }
 }
 
+test_help() {
+    assert_equal "${lines[1]}"  "Usage:"
+    assert_equal "${lines[2]}"  "  gh-md-toc [options] src [src]   Create TOC for a README file (url or local path)"
+    assert_equal "${lines[3]}"  "  gh-md-toc -                     Create TOC for markdown from STDIN"
+    assert_equal "${lines[4]}"  "  gh-md-toc --help                Show help"
+    assert_equal "${lines[5]}"  "  gh-md-toc --version             Show version"
+    assert_equal "${lines[6]}"  "Options:"
+    assert_equal "${lines[7]}"  "  --indent <NUM>      Set indent size. Default: 3."
+    assert_equal "${lines[8]}"  "  --depth <NUM>       Max heading level to include into TOC. Default: 0 (all levels)."
+    assert_equal "${lines[9]}"  "  --numbered <TYPE>   Number TOC entries: list (ordered list) or outline (1.1. in text). Default: none."
+    assert_equal "${lines[10]}" "  --bullet <CHAR>     Bullet of TOC entries: *, - or +. Default: *."
+    assert_equal "${lines[11]}" "  --keep-code         Keep inline code of headings in backticks. Default: false."
+    assert_equal "${lines[12]}" "  --insert            Insert new TOC into original file. For local files only. Default: false."
+    assert_equal "${lines[14]}" "  --no-backup         Remove backup file. Set --insert as well. Default: false."
+    assert_equal "${lines[15]}" "  --hide-footer       Do not write date & author of the last TOC update. Set --insert as well. Default: false."
+    assert_equal "${lines[16]}" "  --skip-no-markers   Skip files without <!--ts--> or <!--te-->. Set --insert as well. Default: false."
+    assert_equal "${lines[17]}" "  --stdout            Print the whole file with the new TOC to stdout. The file is not changed. Default: false."
+    assert_equal "${lines[18]}" "  --skip-header       Hide entry of the topmost headlines. Default: false."
+    assert_equal "${#lines[@]}"  "20"
+}
+
 @test "--help" {
     run $BATS_TEST_DIRNAME/../gh-md-toc --help
     assert_success
-    assert_equal "${lines[1]}" "Usage:"
-    assert_equal "${lines[2]}" "  gh-md-toc [--insert] [--hide-footer] src [src]  Create TOC for a README file (url or local path)"
-    assert_equal "${lines[3]}" "  gh-md-toc [--no-backup] [--hide-footer] src [src]  Create TOC without backup, requires <!--ts--> / <!--te--> placeholders"
-    assert_equal "${lines[4]}" "  gh-md-toc -                     Create TOC for markdown from STDIN"
-    assert_equal "${lines[5]}" "  gh-md-toc --help                Show help"
-    assert_equal "${lines[6]}" "  gh-md-toc --version             Show version"
+    test_help
 }
 
 @test "no arguments" {
     run $BATS_TEST_DIRNAME/../gh-md-toc
     assert_success
-    assert_equal "${lines[1]}" "Usage:"
-    assert_equal "${lines[2]}" "  gh-md-toc [--insert] [--hide-footer] src [src]  Create TOC for a README file (url or local path)"
-    assert_equal "${lines[3]}" "  gh-md-toc [--no-backup] [--hide-footer] src [src]  Create TOC without backup, requires <!--ts--> / <!--te--> placeholders"
-    assert_equal "${lines[4]}" "  gh-md-toc -                     Create TOC for markdown from STDIN"
-    assert_equal "${lines[5]}" "  gh-md-toc --help                Show help"
-    assert_equal "${lines[6]}" "  gh-md-toc --version             Show version"
+    test_help
 }
 
 @test "--version" {
     run $BATS_TEST_DIRNAME/../gh-md-toc --version
     assert_success
-    assert_equal "${lines[0]}" "0.8.0"
+    assert_equal "${lines[0]}" "0.11.0"
+    assert_equal "${lines[1]}" "os:     `uname -s`"
+    assert_equal "${lines[2]}" "arch:   `uname -m`"
 }
 
 @test "TOC for non-english chars, #6, #10" {
+    run $BATS_TEST_DIRNAME/../gh-md-toc tests/test\ directory/test_nonenglishchars.md
+    assert_success
+
+    assert_equal "${lines[2]}"   "* [命令行的艺术](#命令行的艺术)"
+    assert_equal "${lines[3]}"   "   * [必读](#必读)"
+    assert_equal "${lines[4]}"   "   * [基础](#基础)"
+    assert_equal "${lines[5]}"   "   * [日常使用](#日常使用)"
+}
+
+@test "TOC for remote non-english chars (remote load), #6, #10" {
     run $BATS_TEST_DIRNAME/../gh-md-toc \
         https://github.com/ekalinin/envirius/blob/f939d3b6882bfb6ecb28ef7b6e62862f934ba945/README.ru.md
     assert_success
@@ -154,7 +201,7 @@ load test_helper
 }
 
 @test "TOC for text with backquote, #13" {
-    run $BATS_TEST_DIRNAME/../gh-md-toc tests/test_backquote.md
+    run $BATS_TEST_DIRNAME/../gh-md-toc tests/test\ directory/test_backquote.md
     assert_success
 
     assert_equal "${lines[2]}"   "* [The command foo1](#the-command-foo1)"
@@ -165,8 +212,716 @@ load test_helper
 }
 
 @test "TOC for text with plus signs, #100" {
-    run $BATS_TEST_DIRNAME/../gh-md-toc tests/test_plussign.md
+    run $BATS_TEST_DIRNAME/../gh-md-toc tests/test\ directory/test_plussign.md
     assert_success
 
     assert_equal "${lines[2]}" "* [C vs C++](#c-vs-c)"
+}
+
+@test "Toc for file path with space, #136" {
+    run $BATS_TEST_DIRNAME/../gh-md-toc --no-backup --hide-footer tests/test\ directory/test_filepathwithspace.md
+    assert_success
+
+    assert_equal "${lines[2]}"   "* [Title](#title)"
+    assert_equal "${lines[3]}"   "   * [This is test for file path with space](#this-is-test-for-file-path-with-space)"
+}
+
+@test "Toc for setext heading with formatting, #145" {
+    run $BATS_TEST_DIRNAME/../gh-md-toc --no-backup --hide-footer tests/test\ directory/test_setextwithformatting.md
+    assert_success
+
+    assert_equal "${lines[2]}"   "* [Title one](#title-one)"
+    assert_equal "${lines[3]}"   "   * [This is test for setext-style without formatting](#this-is-test-for-setext-style-without-formatting)"
+    assert_equal "${lines[4]}"   "* [Title two](#title-two)"
+    assert_equal "${lines[5]}"   "   * [This is test for setext-style with formatting](#this-is-test-for-setext-style-with-formatting)"
+    assert_equal "${lines[6]}"   "* [Title three](#title-three)"
+    assert_equal "${lines[7]}"   "   * [This is a regression test for atx-style](#this-is-a-regression-test-for-atx-style)"
+    assert_equal "${lines[8]}"   "* [Title four is a particularly long title because of wrapping](#title-four-is-a-particularly-long-title-because-of-wrapping)"
+    assert_equal "${lines[9]}"   "   * [This is a test for long titles](#this-is-a-test-for-long-titles)"
+}
+
+@test "Error for local file without network access" {
+    # route curl through a closed port to simulate a network failure
+    HTTPS_PROXY=http://127.0.0.1:9 run $BATS_TEST_DIRNAME/../gh-md-toc tests/test\ directory/test_plussign.md
+    assert_fail
+
+    assert_equal "${lines[2]}"   "Parsing local markdown file requires access to github API"
+    assert_equal "${lines[3]}"   "Please make sure curl is installed and check your network connectivity"
+}
+
+@test "Error for local file with invalid GitHub token" {
+    GH_TOC_TOKEN=invalid run $BATS_TEST_DIRNAME/../gh-md-toc tests/test\ directory/test_plussign.md
+    assert_fail
+
+    assert_equal "${lines[2]}"   "Parsing local markdown file requires access to github API"
+    assert_equal "${lines[3]}"   "Error: GitHub API rejected the auth token (HTTP 401 Bad credentials)"
+    assert_equal "${lines[4]}"   "Check the GitHub auth token in the GH_TOC_TOKEN environment variable"
+}
+
+@test "Error for markdown from stdin with invalid GitHub token" {
+    printf '# A\n' | {
+        GH_TOC_TOKEN=invalid run $BATS_TEST_DIRNAME/../gh-md-toc -
+        assert_fail
+
+        assert_equal "${lines[0]}"   "Parsing local markdown file requires access to github API"
+        assert_equal "${lines[1]}"   "Error: GitHub API rejected the auth token (HTTP 401 Bad credentials)"
+        assert_equal "${lines[2]}"   "Check the GitHub auth token in the GH_TOC_TOKEN environment variable"
+    }
+}
+
+@test "Error for markdown from stdin without network access" {
+    printf '# A\n' | {
+        # route curl through a closed port to simulate a network failure
+        HTTPS_PROXY=http://127.0.0.1:9 run $BATS_TEST_DIRNAME/../gh-md-toc -
+        assert_fail
+
+        assert_equal "${lines[0]}"   "Parsing local markdown file requires access to github API"
+        assert_equal "${lines[1]}"   "Please make sure curl is installed and check your network connectivity"
+    }
+}
+
+@test "TOC for local file mentioning API error messages" {
+    run $BATS_TEST_DIRNAME/../gh-md-toc tests/test\ directory/test_api_error_text.md
+    assert_success
+
+    assert_equal "${lines[2]}"   "* [Bad credentials](#bad-credentials)"
+    assert_equal "${lines[3]}"   "   * [API rate limit exceeded](#api-rate-limit-exceeded)"
+}
+
+@test "TOC with depth for local file, #25" {
+    run $BATS_TEST_DIRNAME/../gh-md-toc --depth 2 tests/test\ directory/test_depth.md
+    assert_success
+
+    assert_equal "${lines[2]}"   "* [Title one](#title-one)"
+    assert_equal "${lines[3]}"   "   * [Section](#section)"
+    assert_equal "${lines[4]}"   "* [Title two](#title-two)"
+    assert_equal "${lines[5]}"   "<!-- Created by https://github.com/ekalinin/github-markdown-toc -->"
+}
+
+@test "TOC with depth for markdown from stdin, #25" {
+    cat tests/test\ directory/test_depth.md | {
+        run $BATS_TEST_DIRNAME/../gh-md-toc --depth 1 -
+        assert_success
+
+        assert_equal "${lines[0]}"   "* [Title one](#title-one)"
+        assert_equal "${lines[1]}"   "* [Title two](#title-two)"
+        assert_equal "${#lines[@]}"  "2"
+    }
+}
+
+@test "TOC as ordered list for local file, #26" {
+    run gh_md_toc_no_stderr --numbered list tests/test\ directory/test_numbered.md
+    assert_success
+
+    assert_equal "${lines[2]}"   "1. [Title one](#title-one)"
+    assert_equal "${lines[3]}"   "   1. [Section](#section)"
+    assert_equal "${lines[4]}"   "      1. [Subsection](#subsection)"
+    assert_equal "${lines[5]}"   "   1. [Other section](#other-section)"
+    assert_equal "${lines[6]}"   "1. [Title two](#title-two)"
+    assert_equal "${lines[7]}"   "      1. [Skipped](#skipped)"
+    assert_equal "${lines[8]}"   "   1. [After skip](#after-skip)"
+    assert_equal "${lines[9]}"   "<!-- Created by https://github.com/ekalinin/github-markdown-toc -->"
+}
+
+@test "TOC with outline numbers for local file, #26" {
+    run gh_md_toc_no_stderr --numbered outline tests/test\ directory/test_numbered.md
+    assert_success
+
+    assert_equal "${lines[2]}"   "* [1. Title one](#title-one)"
+    assert_equal "${lines[3]}"   "   * [1.1. Section](#section)"
+    assert_equal "${lines[4]}"   "      * [1.1.1. Subsection](#subsection)"
+    assert_equal "${lines[5]}"   "   * [1.2. Other section](#other-section)"
+    assert_equal "${lines[6]}"   "* [2. Title two](#title-two)"
+    assert_equal "${lines[7]}"   "      * [2.1. Skipped](#skipped)"
+    assert_equal "${lines[8]}"   "   * [2.2. After skip](#after-skip)"
+    assert_equal "${lines[9]}"   "<!-- Created by https://github.com/ekalinin/github-markdown-toc -->"
+}
+
+@test "TOC with outline numbers and depth for markdown from stdin, #26" {
+    cat tests/test\ directory/test_numbered.md | {
+        run $BATS_TEST_DIRNAME/../gh-md-toc --depth 2 --numbered outline -
+        assert_success
+
+        assert_equal "${lines[0]}"   "* [1. Title one](#title-one)"
+        assert_equal "${lines[1]}"   "   * [1.1. Section](#section)"
+        assert_equal "${lines[2]}"   "   * [1.2. Other section](#other-section)"
+        assert_equal "${lines[3]}"   "* [2. Title two](#title-two)"
+        assert_equal "${lines[4]}"   "   * [2.1. After skip](#after-skip)"
+        assert_equal "${#lines[@]}"  "5"
+    }
+}
+
+@test "Error for unknown --numbered type, #26" {
+    run $BATS_TEST_DIRNAME/../gh-md-toc --numbered roman README.md
+    assert_fail
+
+    assert_equal "${lines[0]}"   "Unknown type for --numbered: 'roman'. Use 'list' or 'outline'."
+}
+
+@test "Error for --numbered list with indent less than 3, #26" {
+    run $BATS_TEST_DIRNAME/../gh-md-toc --indent 2 --numbered list README.md
+    assert_fail
+
+    assert_equal "${lines[0]}"   "--numbered list requires --indent 3 or more, got '2'."
+}
+
+@test "TOC without level 1 heading for local file, #30" {
+    run $BATS_TEST_DIRNAME/../gh-md-toc tests/test\ directory/test_noh1.md
+    assert_success
+
+    assert_equal "${lines[2]}"   "* [Section one](#section-one)"
+    assert_equal "${lines[3]}"   "   * [Subsection](#subsection)"
+    assert_equal "${lines[4]}"   "* [Section two](#section-two)"
+    assert_equal "${lines[5]}"   "<!-- Created by https://github.com/ekalinin/github-markdown-toc -->"
+}
+
+@test "TOC without level 1 heading and indent 4 for markdown from stdin, #30" {
+    cat tests/test\ directory/test_noh1.md | {
+        run $BATS_TEST_DIRNAME/../gh-md-toc --indent 4 -
+        assert_success
+
+        assert_equal "${lines[0]}"   "* [Section one](#section-one)"
+        assert_equal "${lines[1]}"   "    * [Subsection](#subsection)"
+        assert_equal "${lines[2]}"   "* [Section two](#section-two)"
+        assert_equal "${#lines[@]}"  "3"
+    }
+}
+
+@test "TOC without level 1 heading and depth for markdown from stdin, #30" {
+    cat tests/test\ directory/test_noh1.md | {
+        run $BATS_TEST_DIRNAME/../gh-md-toc --depth 2 -
+        assert_success
+
+        assert_equal "${lines[0]}"   "* [Section one](#section-one)"
+        assert_equal "${lines[1]}"   "* [Section two](#section-two)"
+        assert_equal "${#lines[@]}"  "2"
+    }
+}
+
+@test "TOC with dash bullets for local file, #71" {
+    run $BATS_TEST_DIRNAME/../gh-md-toc --bullet - tests/test\ directory/test_depth.md
+    assert_success
+
+    assert_equal "${lines[2]}"   "- [Title one](#title-one)"
+    assert_equal "${lines[3]}"   "   - [Section](#section)"
+    assert_equal "${lines[4]}"   "      - [Subsection](#subsection)"
+    assert_equal "${lines[5]}"   "         - [Deep](#deep)"
+    assert_equal "${lines[6]}"   "- [Title two](#title-two)"
+    assert_equal "${lines[7]}"   "<!-- Created by https://github.com/ekalinin/github-markdown-toc -->"
+}
+
+@test "TOC with dash bullets for markdown from stdin, #71" {
+    cat tests/test\ directory/test_depth.md | {
+        run $BATS_TEST_DIRNAME/../gh-md-toc --bullet - -
+        assert_success
+
+        assert_equal "${lines[0]}"   "- [Title one](#title-one)"
+        assert_equal "${lines[1]}"   "   - [Section](#section)"
+        assert_equal "${lines[2]}"   "      - [Subsection](#subsection)"
+        assert_equal "${lines[3]}"   "         - [Deep](#deep)"
+        assert_equal "${lines[4]}"   "- [Title two](#title-two)"
+        assert_equal "${#lines[@]}"  "5"
+    }
+}
+
+@test "TOC with plus bullets and outline numbers for local file, #71" {
+    run gh_md_toc_no_stderr --numbered outline --bullet + tests/test\ directory/test_numbered.md
+    assert_success
+
+    assert_equal "${lines[2]}"   "+ [1. Title one](#title-one)"
+    assert_equal "${lines[3]}"   "   + [1.1. Section](#section)"
+    assert_equal "${lines[4]}"   "      + [1.1.1. Subsection](#subsection)"
+    assert_equal "${lines[5]}"   "   + [1.2. Other section](#other-section)"
+    assert_equal "${lines[6]}"   "+ [2. Title two](#title-two)"
+    assert_equal "${lines[7]}"   "      + [2.1. Skipped](#skipped)"
+    assert_equal "${lines[8]}"   "   + [2.2. After skip](#after-skip)"
+    assert_equal "${lines[9]}"   "<!-- Created by https://github.com/ekalinin/github-markdown-toc -->"
+}
+
+@test "Error for unknown --bullet char, #71" {
+    run $BATS_TEST_DIRNAME/../gh-md-toc --bullet x README.md
+    assert_fail
+
+    assert_equal "${lines[0]}"   "Unknown bullet for --bullet: 'x'. Use '*', '-' or '+'."
+}
+
+@test "Error for --bullet with --numbered list, #71" {
+    run $BATS_TEST_DIRNAME/../gh-md-toc --numbered list --bullet - README.md
+    assert_fail
+
+    assert_equal "${lines[0]}"   "--bullet cannot be used with --numbered list."
+}
+
+# Expected stdout of "--hide-footer --stdout" for test_stdout.md. The fixture
+# has no newline at the end on purpose: the last line must be kept as is.
+stdout_expected() {
+    printf '# Title\n\n<!--ts-->\n* [Title](#title)\n   * [Section](#section)\n<!--te-->\n\n    # indented code, not a heading\n\n## Section\n\nText without a newline at the end'
+}
+
+# Runs gh-md-toc with stdout and stderr in separate files, keeping the exact
+# bytes: "run" merges them and drops the trailing newline.
+run_to_files() {
+    status=0
+    $BATS_TEST_DIRNAME/../gh-md-toc "$@" > "$BATS_TEST_TMPDIR/out.md" 2> "$BATS_TEST_TMPDIR/err.txt" || status=$?
+}
+
+# Runs gh-md-toc without stderr: "run" merges stderr into "lines", so a warning
+# would shift the line indexes.
+gh_md_toc_no_stderr() {
+    $BATS_TEST_DIRNAME/../gh-md-toc "$@" 2>/dev/null
+}
+
+@test "Whole file with TOC to stdout for local file, #62" {
+    run_to_files --hide-footer --stdout tests/test\ directory/test_stdout.md
+    assert_success
+
+    stdout_expected | cmp - "$BATS_TEST_TMPDIR/out.md"
+}
+
+@test "Whole file with TOC and footer to stdout, #62" {
+    run_to_files --stdout tests/test\ directory/test_stdout.md
+    assert_success
+
+    assert_equal "$(sed -n 6p "$BATS_TEST_TMPDIR/out.md")"  ""
+    assert_equal "$(sed -n 7p "$BATS_TEST_TMPDIR/out.md")"  "<!-- Created by https://github.com/ekalinin/github-markdown-toc -->"
+    assert_equal "$(sed -n 8p "$BATS_TEST_TMPDIR/out.md" | cut -c 1-15)"  "<!-- Added by: "
+    assert_equal "$(sed -n 9p "$BATS_TEST_TMPDIR/out.md")"  ""
+    assert_equal "$(sed -n 10p "$BATS_TEST_TMPDIR/out.md")" "<!--te-->"
+}
+
+@test "Whole file with TOC to stdout is the same as --insert, #62" {
+    cp tests/test\ directory/test_stdout.md "$BATS_TEST_TMPDIR/copy.md"
+    run $BATS_TEST_DIRNAME/../gh-md-toc --insert --no-backup --hide-footer "$BATS_TEST_TMPDIR/copy.md"
+    assert_success
+
+    run_to_files --hide-footer --stdout tests/test\ directory/test_stdout.md
+    assert_success
+    cmp "$BATS_TEST_TMPDIR/copy.md" "$BATS_TEST_TMPDIR/out.md"
+}
+
+@test "Whole file with TOC to stdout does not change the file, #62" {
+    local sum_before ls_before
+    sum_before=$(cksum < tests/test\ directory/test_stdout.md)
+    ls_before=$(ls -A tests/test\ directory)
+
+    run_to_files --insert --no-backup --hide-footer --stdout tests/test\ directory/test_stdout.md
+    assert_success
+
+    assert_equal "$(cksum < tests/test\ directory/test_stdout.md)" "$sum_before"
+    assert_equal "$(ls -A tests/test\ directory)" "$ls_before"
+    stdout_expected | cmp - "$BATS_TEST_TMPDIR/out.md"
+}
+
+@test "Whole file with TOC to stdout for markdown from stdin, #62" {
+    run_to_files --hide-footer --stdout - < tests/test\ directory/test_stdout.md
+    assert_success
+
+    stdout_expected | cmp - "$BATS_TEST_TMPDIR/out.md"
+}
+
+@test "Whole file with dash bullets to stdout, #62" {
+    run $BATS_TEST_DIRNAME/../gh-md-toc --bullet - --hide-footer --stdout tests/test\ directory/test_stdout.md
+    assert_success
+
+    assert_equal "${lines[1]}"   "<!--ts-->"
+    assert_equal "${lines[2]}"   "- [Title](#title)"
+    assert_equal "${lines[3]}"   "   - [Section](#section)"
+    assert_equal "${lines[4]}"   "<!--te-->"
+}
+
+@test "Whole file with skip headers to stdout, #62" {
+    run $BATS_TEST_DIRNAME/../gh-md-toc --hide-footer --stdout --skip-header tests/test\ directory/test_stdout.md
+    assert_success
+
+    assert_equal "${lines[1]}"   "<!--ts-->"
+    assert_equal "${lines[2]}"   "* [Section](#section)"
+    assert_equal "${lines[3]}"   "<!--te-->"
+}
+
+@test "Error for --stdout with two inputs, #62" {
+    run_to_files --stdout README.md tests/test\ directory/test_stdout.md
+    assert_fail
+
+    [ ! -s "$BATS_TEST_TMPDIR/out.md" ]
+    assert_equal "$(cat "$BATS_TEST_TMPDIR/err.txt")" "--stdout works with one local file or '-' (STDIN) only."
+}
+
+@test "Error for --stdout with remote file, #62" {
+    run_to_files --stdout https://github.com/ekalinin/github-markdown-toc/blob/master/README.md
+    assert_fail
+
+    [ ! -s "$BATS_TEST_TMPDIR/out.md" ]
+    assert_equal "$(cat "$BATS_TEST_TMPDIR/err.txt")" "--stdout works with one local file or '-' (STDIN) only."
+}
+
+@test "Error for --stdout with file without markers, #62" {
+    run_to_files --stdout tests/test\ directory/test_plussign.md
+    assert_fail
+
+    [ ! -s "$BATS_TEST_TMPDIR/out.md" ]
+    assert_equal "$(cat "$BATS_TEST_TMPDIR/err.txt")" "You don't have <!--ts--> or <!--te--> in your file...exiting"
+}
+
+@test "Error for --stdout with invalid GitHub token, #62" {
+    GH_TOC_TOKEN=invalid run_to_files --stdout tests/test\ directory/test_stdout.md
+    assert_fail
+
+    [ ! -s "$BATS_TEST_TMPDIR/out.md" ]
+    grep -Fx "Error: GitHub API rejected the auth token (HTTP 401 Bad credentials)" "$BATS_TEST_TMPDIR/err.txt"
+}
+
+@test "No temporary files left by --stdout for markdown from stdin, #62" {
+    mkdir "$BATS_TEST_TMPDIR/tmp"
+    TMPDIR="$BATS_TEST_TMPDIR/tmp" run_to_files --hide-footer --stdout - < tests/test\ directory/test_stdout.md
+    assert_success
+
+    assert_equal "$(ls -A "$BATS_TEST_TMPDIR/tmp")" ""
+}
+
+@test "No temporary files left by --stdout on error, #62" {
+    mkdir "$BATS_TEST_TMPDIR/tmp"
+    TMPDIR="$BATS_TEST_TMPDIR/tmp" GH_TOC_TOKEN=invalid run_to_files --hide-footer --stdout - < tests/test\ directory/test_stdout.md
+    assert_fail
+
+    grep -Fx "Error: GitHub API rejected the auth token (HTTP 401 Bad credentials)" "$BATS_TEST_TMPDIR/err.txt"
+    assert_equal "$(ls -A "$BATS_TEST_TMPDIR/tmp")" ""
+}
+
+@test "TOC for markdown from stdin with indented code, #62" {
+    cat tests/test\ directory/test_stdout.md | {
+        run $BATS_TEST_DIRNAME/../gh-md-toc -
+        assert_success
+
+        assert_equal "${lines[0]}"   "* [Title](#title)"
+        assert_equal "${lines[1]}"   "   * [Section](#section)"
+        assert_equal "${#lines[@]}"  "2"
+    }
+}
+
+@test "TOC for markdown from stdin without newline at the end, #62" {
+    printf '# A\n\n## B' | {
+        run $BATS_TEST_DIRNAME/../gh-md-toc -
+        assert_success
+
+        assert_equal "${lines[0]}"   "* [A](#a)"
+        assert_equal "${lines[1]}"   "   * [B](#b)"
+        assert_equal "${#lines[@]}"  "2"
+    }
+}
+
+@test "TOC for headings with links and formatting, #40, #67" {
+    run $BATS_TEST_DIRNAME/../gh-md-toc tests/test\ directory/test_headingmarkup.md
+    assert_success
+
+    assert_equal "${lines[2]}"   "* [Top](#top)"
+    assert_equal "${lines[3]}"   "   * [On Go to Top](#on-go-to-top)"
+    assert_equal "${lines[4]}"   "   * [My issue](#my-issue)"
+    assert_equal "${lines[5]}"   "   * [See docs here](#see-docs-here)"
+    assert_equal "${lines[6]}"   "   * [Linux vs. Samba permissions](#linux-vs-samba-permissions)"
+    assert_equal "${lines[7]}"   "   * [A  B](#a--b)"
+    assert_equal "${lines[8]}"   "   * [Tom &amp; Jerry &lt;3](#tom--jerry-3)"
+    assert_equal "${lines[9]}"   "<!-- Created by https://github.com/ekalinin/github-markdown-toc -->"
+}
+
+@test "Warning for skipped heading level for local file, #75" {
+    run_to_files tests/test\ directory/test_numbered.md
+    assert_success
+
+    assert_equal "$(cat "$BATS_TEST_TMPDIR/err.txt")" "Warning: heading 'Skipped' (level 3) skips a level after 'Title two' (level 1), see https://github.com/ekalinin/github-markdown-toc/issues/75"
+
+    run cat "$BATS_TEST_TMPDIR/out.md"
+    assert_equal "${lines[2]}"   "* [Title one](#title-one)"
+    assert_equal "${lines[3]}"   "   * [Section](#section)"
+    assert_equal "${lines[4]}"   "      * [Subsection](#subsection)"
+    assert_equal "${lines[5]}"   "   * [Other section](#other-section)"
+    assert_equal "${lines[6]}"   "* [Title two](#title-two)"
+    assert_equal "${lines[7]}"   "      * [Skipped](#skipped)"
+    assert_equal "${lines[8]}"   "   * [After skip](#after-skip)"
+    assert_equal "${lines[9]}"   "<!-- Created by https://github.com/ekalinin/github-markdown-toc -->"
+}
+
+@test "Warning for headings without a parent and two skipped levels for markdown from stdin, #75" {
+    printf '### First\n\n## Second\n\n#### Third\n\n### Fourth\n\n###### Fifth\n' | {
+        run_to_files -
+        assert_success
+
+        assert_equal "$(sed -n 1p "$BATS_TEST_TMPDIR/err.txt")" "Warning: heading 'Third' (level 4) skips a level after 'Second' (level 2), see https://github.com/ekalinin/github-markdown-toc/issues/75"
+        assert_equal "$(sed -n 2p "$BATS_TEST_TMPDIR/err.txt")" "Warning: heading 'Fifth' (level 6) skips a level after 'Fourth' (level 3), see https://github.com/ekalinin/github-markdown-toc/issues/75"
+        assert_equal "$(wc -l < "$BATS_TEST_TMPDIR/err.txt" | tr -d ' ')" "2"
+    }
+}
+
+@test "Warning for skipped heading level is not inserted into the file, #75" {
+    printf '<!--ts-->\n<!--te-->\n\n# Title\n\n### Skipped\n' > "$BATS_TEST_TMPDIR/skipped.md"
+    run_to_files --insert --no-backup --hide-footer "$BATS_TEST_TMPDIR/skipped.md"
+    assert_success
+
+    assert_equal "$(sed -n 2p "$BATS_TEST_TMPDIR/skipped.md")" "* [Title](#title)"
+    assert_equal "$(sed -n 3p "$BATS_TEST_TMPDIR/skipped.md")" "      * [Skipped](#skipped)"
+    assert_equal "$(sed -n 4p "$BATS_TEST_TMPDIR/skipped.md")" "<!--te-->"
+    assert_equal "$(grep -c Warning "$BATS_TEST_TMPDIR/skipped.md")" "0"
+    assert_equal "$(cat "$BATS_TEST_TMPDIR/err.txt")" "Warning: heading 'Skipped' (level 3) skips a level after 'Title' (level 1), see https://github.com/ekalinin/github-markdown-toc/issues/75"
+}
+
+@test "Warning for skipped heading level is not in the whole file on stdout, #75" {
+    printf '<!--ts-->\n<!--te-->\n\n# Title\n\n### Skipped\n' | {
+        run_to_files --hide-footer --stdout -
+        assert_success
+
+        printf '<!--ts-->\n* [Title](#title)\n      * [Skipped](#skipped)\n<!--te-->\n\n# Title\n\n### Skipped\n' | cmp - "$BATS_TEST_TMPDIR/out.md"
+        assert_equal "$(cat "$BATS_TEST_TMPDIR/err.txt")" "Warning: heading 'Skipped' (level 3) skips a level after 'Title' (level 1), see https://github.com/ekalinin/github-markdown-toc/issues/75"
+    }
+}
+
+@test "Warning for skipped heading level for several files, #75" {
+    run_to_files tests/test\ directory/test_depth.md tests/test\ directory/test_numbered.md
+    assert_success
+
+    assert_equal "$(cat "$BATS_TEST_TMPDIR/err.txt")" "tests/test directory/test_numbered.md: Warning: heading 'Skipped' (level 3) skips a level after 'Title two' (level 1), see https://github.com/ekalinin/github-markdown-toc/issues/75"
+}
+
+@test "No warning for skipped heading level dropped by depth for markdown from stdin, #75" {
+    cat tests/test\ directory/test_numbered.md | {
+        run_to_files --depth 2 -
+        assert_success
+
+        [ ! -s "$BATS_TEST_TMPDIR/err.txt" ]
+    }
+}
+
+@test "No warning for consecutive heading levels for local file, #75" {
+    run_to_files tests/test\ directory/test_depth.md
+    assert_success
+
+    [ ! -s "$BATS_TEST_TMPDIR/err.txt" ]
+}
+
+@test "TOC for several files with a space in the path, #76" {
+    run gh_md_toc_no_stderr tests/test\ directory/test_depth.md tests/test\ directory/test_numbered.md
+    assert_success
+
+    assert_equal "${lines[0]}"   "* [Title one](tests/test%20directory/test_depth.md#title-one)"
+    assert_equal "${lines[1]}"   "   * [Section](tests/test%20directory/test_depth.md#section)"
+    assert_equal "${lines[2]}"   "      * [Subsection](tests/test%20directory/test_depth.md#subsection)"
+    assert_equal "${lines[3]}"   "         * [Deep](tests/test%20directory/test_depth.md#deep)"
+    assert_equal "${lines[4]}"   "* [Title two](tests/test%20directory/test_depth.md#title-two)"
+    assert_equal "${lines[5]}"   "* [Title one](tests/test%20directory/test_numbered.md#title-one)"
+    assert_equal "${lines[12]}"  "<!-- Created by https://github.com/ekalinin/github-markdown-toc -->"
+}
+
+@test "Insert into several files links to the anchor only, #113" {
+    printf '<!--ts-->\n<!--te-->\n\n# Page a\n\n## Usage\n' > "$BATS_TEST_TMPDIR/a.md"
+    printf '<!--ts-->\n<!--te-->\n\n# Title\n\n### Skipped\n' > "$BATS_TEST_TMPDIR/b.md"
+    run_to_files --insert --no-backup --hide-footer "$BATS_TEST_TMPDIR/a.md" "$BATS_TEST_TMPDIR/b.md" https://github.com/ekalinin/sitemap.js/blob/6bc3eb12c898c1037a35a11b2eb24ababdeb3580/README.md
+    assert_success
+
+    assert_equal "$(sed -n 2p "$BATS_TEST_TMPDIR/a.md")" "* [Page a](#page-a)"
+    assert_equal "$(sed -n 3p "$BATS_TEST_TMPDIR/a.md")" "   * [Usage](#usage)"
+    assert_equal "$(sed -n 4p "$BATS_TEST_TMPDIR/a.md")" "<!--te-->"
+    assert_equal "$(sed -n 2p "$BATS_TEST_TMPDIR/b.md")" "* [Title](#title)"
+    assert_equal "$(sed -n 3p "$BATS_TEST_TMPDIR/b.md")" "      * [Skipped](#skipped)"
+    assert_equal "$(sed -n 4p "$BATS_TEST_TMPDIR/b.md")" "<!--te-->"
+    assert_equal "$(grep -Fxc '* [Page a](#page-a)' "$BATS_TEST_TMPDIR/out.md")" "1"
+    assert_equal "$(grep -Fxc '   * [Usage](#usage)' "$BATS_TEST_TMPDIR/out.md")" "1"
+    assert_equal "$(grep -Fxc '* [Title](#title)' "$BATS_TEST_TMPDIR/out.md")" "1"
+    assert_equal "$(grep -Fxc '      * [Skipped](#skipped)' "$BATS_TEST_TMPDIR/out.md")" "1"
+    assert_equal "$(grep -Fxc '* [sitemap.js](https://github.com/ekalinin/sitemap.js/blob/6bc3eb12c898c1037a35a11b2eb24ababdeb3580/README.md#sitemapjs)' "$BATS_TEST_TMPDIR/out.md")" "1"
+    assert_equal "$(cat "$BATS_TEST_TMPDIR/err.txt")" "$BATS_TEST_TMPDIR/b.md: Warning: heading 'Skipped' (level 3) skips a level after 'Title' (level 1), see https://github.com/ekalinin/github-markdown-toc/issues/75"
+}
+
+@test "Insert into a file with CRLF line endings, #119" {
+    printf '<!--ts-->\r\n<!--te-->\r\n\r\n# Title\r\n\r\n## Section\r\n' > "$BATS_TEST_TMPDIR/crlf.md"
+    run $BATS_TEST_DIRNAME/../gh-md-toc --insert --no-backup "$BATS_TEST_TMPDIR/crlf.md"
+    assert_success
+
+    assert_equal "$(sed -n 2p "$BATS_TEST_TMPDIR/crlf.md")" "* [Title](#title)"$'\r'
+    assert_equal "$(sed -n 3p "$BATS_TEST_TMPDIR/crlf.md")" "   * [Section](#section)"$'\r'
+    assert_equal "$(sed -n 5p "$BATS_TEST_TMPDIR/crlf.md")" "<!-- Created by https://github.com/ekalinin/github-markdown-toc -->"$'\r'
+    assert_equal "$(sed -n 8p "$BATS_TEST_TMPDIR/crlf.md")" "<!--te-->"$'\r'
+    assert_equal "$(grep -vc $'\r$' "$BATS_TEST_TMPDIR/crlf.md")" "0"
+}
+
+@test "Whole file with TOC to stdout for CRLF line endings, #119" {
+    printf '<!--ts-->\r\n<!--te-->\r\n\r\n# Title\r\n\r\n## Section\r\n' > "$BATS_TEST_TMPDIR/crlf.md"
+    run_to_files --hide-footer --stdout "$BATS_TEST_TMPDIR/crlf.md"
+    assert_success
+
+    printf '<!--ts-->\r\n* [Title](#title)\r\n   * [Section](#section)\r\n<!--te-->\r\n\r\n# Title\r\n\r\n## Section\r\n' | cmp - "$BATS_TEST_TMPDIR/out.md"
+}
+
+@test "TOC with skip headers for CRLF line endings, #119" {
+    printf '# Header\r\n\r\n<!--ts-->\r\n<!--te-->\r\n\r\n# Title\r\n\r\n## Section\r\n' > "$BATS_TEST_TMPDIR/crlf.md"
+    run $BATS_TEST_DIRNAME/../gh-md-toc --skip-header "$BATS_TEST_TMPDIR/crlf.md"
+    assert_success
+
+    assert_equal "${lines[2]}" "* [Title](#title)"
+    assert_equal "${lines[3]}" "   * [Section](#section)"
+    assert_equal "${lines[4]}" "<!-- Created by https://github.com/ekalinin/github-markdown-toc -->"
+}
+
+@test "Insert with trailing whitespace after the markers, #119" {
+    printf '<!--ts--> \t\n<!--te-->  \n\n# Title\n' > "$BATS_TEST_TMPDIR/spaces.md"
+    run $BATS_TEST_DIRNAME/../gh-md-toc --insert --no-backup --hide-footer "$BATS_TEST_TMPDIR/spaces.md"
+    assert_success
+
+    printf '<!--ts--> \t\n* [Title](#title)\n<!--te-->  \n\n# Title\n' | cmp - "$BATS_TEST_TMPDIR/spaces.md"
+}
+
+@test "Error for indented markers, #119" {
+    printf '    <!--ts-->\n    <!--te-->\n\n# Title\n' > "$BATS_TEST_TMPDIR/indented.md"
+    run_to_files --insert --no-backup --hide-footer "$BATS_TEST_TMPDIR/indented.md"
+    assert_fail
+
+    assert_equal "$(grep -Fxc "You don't have <!--ts--> or <!--te--> in your file...exiting" "$BATS_TEST_TMPDIR/out.md")" "1"
+    printf '    <!--ts-->\n    <!--te-->\n\n# Title\n' | cmp - "$BATS_TEST_TMPDIR/indented.md"
+}
+
+@test "Error for local file larger than the GitHub API limit, #141" {
+    head -c 1048576 /dev/zero | tr '\0' 'a' > "$BATS_TEST_TMPDIR/big.md"
+    run $BATS_TEST_DIRNAME/../gh-md-toc "$BATS_TEST_TMPDIR/big.md"
+    assert_fail
+
+    assert_equal "${lines[2]}"   "Parsing local markdown file requires access to github API"
+    assert_equal "${lines[3]}"   "Error: GitHub API request failed (HTTP 403)"
+    [[ "${lines[4]}" == *"too large"* ]]
+}
+
+@test "Insert into several files skips a file without markers, #110" {
+    printf '<!--ts-->\n<!--te-->\n\n# Page a\n' > "$BATS_TEST_TMPDIR/a.md"
+    printf '# Page b\n' > "$BATS_TEST_TMPDIR/b.md"
+    printf '<!--ts-->\n<!--te-->\n\n# Page c\n' > "$BATS_TEST_TMPDIR/c.md"
+    run_to_files --insert --no-backup --hide-footer --skip-no-markers "$BATS_TEST_TMPDIR/a.md" "$BATS_TEST_TMPDIR/b.md" "$BATS_TEST_TMPDIR/c.md"
+    assert_success
+
+    printf '<!--ts-->\n* [Page a](#page-a)\n<!--te-->\n\n# Page a\n' | cmp - "$BATS_TEST_TMPDIR/a.md"
+    printf '<!--ts-->\n* [Page c](#page-c)\n<!--te-->\n\n# Page c\n' | cmp - "$BATS_TEST_TMPDIR/c.md"
+    printf '# Page b\n' | cmp - "$BATS_TEST_TMPDIR/b.md"
+    assert_equal "$(grep -Fxc '* [Page a](#page-a)' "$BATS_TEST_TMPDIR/out.md")" "1"
+    assert_equal "$(grep -Fxc '* [Page c](#page-c)' "$BATS_TEST_TMPDIR/out.md")" "1"
+    assert_equal "$(grep -Fxc '* [Page b](#page-b)' "$BATS_TEST_TMPDIR/out.md")" "0"
+    assert_equal "$(cat "$BATS_TEST_TMPDIR/err.txt")" "$BATS_TEST_TMPDIR/b.md: Warning: no <!--ts--> or <!--te--> in the file, skipped"
+}
+
+@test "Skip a file with one marker without a GitHub API request, #110" {
+    mkdir "$BATS_TEST_TMPDIR/dir"
+    printf '<!--ts-->\n\n# Page b\n' > "$BATS_TEST_TMPDIR/dir/b.md"
+    GH_TOC_TOKEN=invalid run_to_files --insert --skip-no-markers "$BATS_TEST_TMPDIR/dir/b.md"
+    assert_success
+
+    printf '<!--ts-->\n\n# Page b\n' | cmp - "$BATS_TEST_TMPDIR/dir/b.md"
+    assert_equal "$(ls "$BATS_TEST_TMPDIR/dir")" "b.md"
+    assert_equal "$(grep -Fxc 'Parsing local markdown file requires access to github API' "$BATS_TEST_TMPDIR/out.md")" "0"
+    assert_equal "$(cat "$BATS_TEST_TMPDIR/err.txt")" "$BATS_TEST_TMPDIR/dir/b.md: Warning: no <!--ts--> or <!--te--> in the file, skipped"
+}
+
+@test "No skip for a missing file, #110" {
+    run_to_files --skip-no-markers "$BATS_TEST_TMPDIR/missing.md"
+    assert_fail
+
+    assert_equal "$(grep -c 'in the file, skipped$' "$BATS_TEST_TMPDIR/err.txt")" "0"
+}
+
+@test "--skip-no-markers turns on --insert, #110" {
+    printf '<!--ts-->\n<!--te-->\n\n# Page a\n' > "$BATS_TEST_TMPDIR/a.md"
+    run_to_files --skip-no-markers "$BATS_TEST_TMPDIR/a.md"
+    assert_success
+
+    assert_equal "$(sed -n 2p "$BATS_TEST_TMPDIR/a.md")" "* [Page a](#page-a)"
+    assert_equal "$(grep -Fxc "!! TOC was added into: '$BATS_TEST_TMPDIR/a.md'" "$BATS_TEST_TMPDIR/out.md")" "1"
+}
+
+@test "Insert into several files stops at a file without markers, #110" {
+    printf '<!--ts-->\n<!--te-->\n\n# Page a\n' > "$BATS_TEST_TMPDIR/a.md"
+    printf '# Page b\n' > "$BATS_TEST_TMPDIR/b.md"
+    printf '<!--ts-->\n<!--te-->\n\n# Page c\n' > "$BATS_TEST_TMPDIR/c.md"
+    run_to_files --insert --no-backup --hide-footer "$BATS_TEST_TMPDIR/a.md" "$BATS_TEST_TMPDIR/b.md" "$BATS_TEST_TMPDIR/c.md"
+    assert_fail
+
+    assert_equal "$(sed -n 2p "$BATS_TEST_TMPDIR/a.md")" "* [Page a](#page-a)"
+    assert_equal "$(grep -Fxc "You don't have <!--ts--> or <!--te--> in your file...exiting" "$BATS_TEST_TMPDIR/out.md")" "1"
+    printf '# Page b\n' | cmp - "$BATS_TEST_TMPDIR/b.md"
+    printf '<!--ts-->\n<!--te-->\n\n# Page c\n' | cmp - "$BATS_TEST_TMPDIR/c.md"
+}
+
+@test "Error for --skip-no-markers with --stdout, #110" {
+    run_to_files --skip-no-markers --stdout tests/test\ directory/test_stdout.md
+    assert_fail
+
+    [ ! -s "$BATS_TEST_TMPDIR/out.md" ]
+    assert_equal "$(cat "$BATS_TEST_TMPDIR/err.txt")" "--skip-no-markers cannot be used with --stdout."
+}
+
+@test "TOC with inline code without --keep-code for local file, #153" {
+    run $BATS_TEST_DIRNAME/../gh-md-toc tests/test\ directory/test_keepcode.md
+    assert_success
+
+    assert_equal "${lines[2]}"   '* [Headline](#headline)'
+    assert_equal "${lines[3]}"   '   * [The command foo1 is better](#the-command-foo1-is-better)'
+    assert_equal "${lines[4]}"   '   * [a&lt;b&gt;&amp;c](#abc)'
+    assert_equal "${lines[5]}"   '   * [a`b](#ab)'
+    assert_equal "${lines[6]}"   '   * [`a`](#a)'
+    assert_equal "${lines[7]}"   '   * [a``b](#ab-1)'
+    assert_equal "${lines[8]}"   '   * [&amp;lt; &amp;copy;](#lt-copy)'
+    assert_equal "${lines[9]}"   '   * [  spaced  ](#--spaced--)'
+    assert_equal "${lines[10]}"  '   * [x   y](#x---y)'
+    assert_equal "${lines[11]}"  '   * [**kwargs**](#kwargs)'
+    assert_equal "${lines[12]}"  '   * [Tom &amp; Jerry &lt;3](#tom--jerry-3)'
+    assert_equal "${lines[13]}"  '   * [A em code and link](#a-em-code-and-link)'
+    assert_equal "${lines[14]}"  '<!-- Created by https://github.com/ekalinin/github-markdown-toc -->'
+}
+
+@test "TOC with inline code in backticks for local file, #153" {
+    run $BATS_TEST_DIRNAME/../gh-md-toc --keep-code tests/test\ directory/test_keepcode.md
+    assert_success
+
+    assert_equal "${lines[2]}"   '* [`Headline`](#headline)'
+    assert_equal "${lines[3]}"   '   * [The command `foo1` is better](#the-command-foo1-is-better)'
+    assert_equal "${lines[4]}"   '   * [`a<b>&c`](#abc)'
+    assert_equal "${lines[5]}"   '   * [``a`b``](#ab)'
+    assert_equal "${lines[6]}"   '   * [`` `a` ``](#a)'
+    assert_equal "${lines[7]}"   '   * [```a``b```](#ab-1)'
+    assert_equal "${lines[8]}"   '   * [`&lt; &copy;`](#lt-copy)'
+    assert_equal "${lines[9]}"   '   * [`   spaced   `](#--spaced--)'
+    assert_equal "${lines[10]}"  '   * [x ` ` y](#x---y)'
+    assert_equal "${lines[11]}"  '   * [`**kwargs**`](#kwargs)'
+    assert_equal "${lines[12]}"  '   * [Tom &amp; `Jerry` &lt;3](#tom--jerry-3)'
+    assert_equal "${lines[13]}"  '   * [A em `code` and `link`](#a-em-code-and-link)'
+    assert_equal "${lines[14]}"  '<!-- Created by https://github.com/ekalinin/github-markdown-toc -->'
+}
+
+@test "TOC with inline code in backticks for markdown from stdin, #153" {
+    cat tests/test\ directory/test_backquote.md | {
+        run $BATS_TEST_DIRNAME/../gh-md-toc --bullet - --keep-code -
+        assert_success
+
+        assert_equal "${lines[0]}"   '- [The command `foo1`](#the-command-foo1)'
+        assert_equal "${lines[1]}"   '   - [The command `foo2` is better](#the-command-foo2-is-better)'
+        assert_equal "${lines[2]}"   '- [The command `bar1`](#the-command-bar1)'
+        assert_equal "${lines[3]}"   '   - [The command `bar2` is better](#the-command-bar2-is-better)'
+        assert_equal "${lines[4]}"   '      - [The command `bar3` is the best](#the-command-bar3-is-the-best)'
+        assert_equal "${#lines[@]}"  "5"
+    }
+}
+
+@test "TOC with inline code in backticks for remote file, #153" {
+    run $BATS_TEST_DIRNAME/../gh-md-toc --keep-code https://github.com/ekalinin/github-markdown-toc/blob/a28f86dcb616ce17103d1dfc28f6c3ac423c388c/tests/test%20directory/test_backquote.md
+    assert_success
+
+    assert_equal "${lines[2]}"   '* [The command `foo1`](#the-command-foo1)'
+    assert_equal "${lines[3]}"   '   * [The command `foo2` is better](#the-command-foo2-is-better)'
+    assert_equal "${lines[4]}"   '* [The command `bar1`](#the-command-bar1)'
+    assert_equal "${lines[5]}"   '   * [The command `bar2` is better](#the-command-bar2-is-better)'
+    assert_equal "${lines[6]}"   '      * [The command `bar3` is the best](#the-command-bar3-is-the-best)'
+}
+
+@test "Whole file with inline code in backticks to stdout, #153" {
+    printf '<!--ts-->\n<!--te-->\n\n# The command `foo1`\n' > "$BATS_TEST_TMPDIR/a.md"
+    local sum_before
+    sum_before=$(cksum < "$BATS_TEST_TMPDIR/a.md")
+
+    run_to_files --keep-code --hide-footer --stdout "$BATS_TEST_TMPDIR/a.md"
+    assert_success
+
+    printf '<!--ts-->\n* [The command `foo1`](#the-command-foo1)\n<!--te-->\n\n# The command `foo1`\n' | cmp - "$BATS_TEST_TMPDIR/out.md"
+    assert_equal "$(cksum < "$BATS_TEST_TMPDIR/a.md")" "$sum_before"
 }

@@ -1,6 +1,9 @@
 gh-md-toc
 =========
 
+[![CI](https://github.com/ekalinin/github-markdown-toc/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/ekalinin/github-markdown-toc/actions/workflows/ci.yml)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/ekalinin/github-markdown-toc)
+
 gh-md-toc — is for you if you **want to generate TOC** (Table Of Content) for a README.md or
 a GitHub wiki page **without installing additional software**.
 
@@ -21,8 +24,6 @@ better to use a golang based implementation:
 
 It's more solid, reliable and with ability of a parallel processing. And
 absolutely without dependencies.
-
-[![Build Status](https://travis-ci.org/ekalinin/github-markdown-toc.svg?branch=master)](https://travis-ci.org/ekalinin/github-markdown-toc)
 
 Table of contents
 =================
@@ -104,6 +105,90 @@ Table of Contents
         * [OR using Pathogen:](#or-using-pathogen)
         * [OR using Vundle:](#or-using-vundle)
   * [License](#license)
+```
+
+To include only headings up to a given level, use `--depth <NUM>`:
+
+```bash
+➥ ./gh-md-toc --depth 1 ~/projects/Dockerfile.vim/README.md
+
+Table of Contents
+=================
+
+* [Dockerfile.vim](#dockerfilevim)
+* [Screenshot](#screenshot)
+* [Installation](#installation)
+* [License](#license)
+
+<!-- Created by https://github.com/ekalinin/github-markdown-toc -->
+```
+
+To number the entries, use `--numbered list` for an ordered list:
+
+```bash
+➥ ./gh-md-toc --numbered list ~/projects/Dockerfile.vim/README.md
+
+Table of Contents
+=================
+
+1. [Dockerfile.vim](#dockerfilevim)
+1. [Screenshot](#screenshot)
+1. [Installation](#installation)
+         1. [Or using Pathogen:](#or-using-pathogen)
+         1. [Or using Vundle:](#or-using-vundle)
+         1. [Or using NeoBundle:](#or-using-neobundle)
+         1. [Or using Vim-Plug](#or-using-vim-plug)
+1. [License](#license)
+
+<!-- Created by https://github.com/ekalinin/github-markdown-toc -->
+```
+
+or `--numbered outline` for numbers like `3.1.` in the entry text:
+
+```bash
+➥ ./gh-md-toc --numbered outline ~/projects/Dockerfile.vim/README.md
+
+Table of Contents
+=================
+
+* [1. Dockerfile.vim](#dockerfilevim)
+* [2. Screenshot](#screenshot)
+* [3. Installation](#installation)
+         * [3.1. Or using Pathogen:](#or-using-pathogen)
+         * [3.2. Or using Vundle:](#or-using-vundle)
+         * [3.3. Or using NeoBundle:](#or-using-neobundle)
+         * [3.4. Or using Vim-Plug](#or-using-vim-plug)
+* [4. License](#license)
+
+<!-- Created by https://github.com/ekalinin/github-markdown-toc -->
+```
+
+To change the bullet of the entries, use `--bullet <CHAR>` with `*` (default), `-` or `+`:
+
+```bash
+➥ ./gh-md-toc --bullet - ~/projects/Dockerfile.vim/README.md
+
+Table of Contents
+=================
+
+- [Dockerfile.vim](#dockerfilevim)
+- [Screenshot](#screenshot)
+- [Installation](#installation)
+         - [Or using Pathogen:](#or-using-pathogen)
+         - [Or using Vundle:](#or-using-vundle)
+         - [Or using NeoBundle:](#or-using-neobundle)
+         - [Or using Vim-Plug](#or-using-vim-plug)
+- [License](#license)
+
+<!-- Created by https://github.com/ekalinin/github-markdown-toc -->
+```
+
+To keep the inline code of the headings in backticks, use `--keep-code`:
+
+```bash
+➥ printf '# The command `foo1`\n\n## The command `foo2` is better\n' | ./gh-md-toc --keep-code -
+* [The command `foo1`](#the-command-foo1)
+   * [The command `foo2` is better](#the-command-foo2-is-better)
 ```
 
 Remote files
@@ -229,7 +314,7 @@ You can easily combine both ways:
     * [Usage](https://github.com/ekalinin/sitemap.js/blob/master/README.md#usage)
     * [License](https://github.com/ekalinin/sitemap.js/blob/master/README.md#license)
 
-Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
+<!-- Created by https://github.com/ekalinin/github-markdown-toc -->
 ```
 
 Auto insert and update TOC
@@ -266,7 +351,7 @@ Table of Contents
 !! TOC added into a separate file: 'README.test.md.toc.2018-02-04_192655'
 
 
-Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
+<!-- Created by https://github.com/ekalinin/github-markdown-toc -->
 ```
 
 Now check the same file:
@@ -294,6 +379,26 @@ Now check the same file:
 
 Next time when your file will be changed just repeat the command (`./gh-md-toc
 --insert ...`) and TOC will be refreshed again.
+
+To refresh the TOC in all markdown files of a directory, add `--skip-no-markers`:
+the files without `<!--ts-->` or `<!--te-->` are skipped with a warning on stderr,
+instead of an error:
+
+```bash
+$ find . -name '*.md' -exec ./gh-md-toc --insert --no-backup --hide-footer --skip-no-markers {} +
+```
+
+To get the whole file with the new TOC on stdout instead, use `--stdout`. The
+file is not changed and no backup files are created. It takes one local file
+or `-` for STDIN, and works with `--hide-footer` and `--skip-header`:
+
+```bash
+$ ./gh-md-toc --stdout README.test.md > README.new.md
+$ curl -s https://raw.githubusercontent.com/ekalinin/github-markdown-toc/master/README.md | ./gh-md-toc --stdout - > README.md
+```
+
+Do not redirect the output into the same file (`> README.test.md`): the shell
+empties it before it is read. Use `--insert` to update the file in place.
 
 GitHub token
 ------------
@@ -361,7 +466,8 @@ jobs:
       - run: |
           curl https://raw.githubusercontent.com/ekalinin/github-markdown-toc/master/gh-md-toc -o gh-md-toc
           chmod a+x gh-md-toc
-          ./gh-md-toc --insert --no-backup foo.md
+          ./gh-md-toc --insert --no-backup --hide-footer foo.md
+          rm gh-md-toc
       - uses: stefanzweifel/git-auto-commit-action@v4
         with:
           commit_message: Auto update markdown TOC
@@ -370,10 +476,10 @@ jobs:
 Tests
 =====
 
-Done with [bats](https://github.com/sstephenson/bats).
+Done with [bats](https://github.com/bats-core/bats-core).
 Useful articles:
 
-  * https://blog.engineyard.com/2014/bats-test-command-line-tools
+  * https://www.engineyard.com/blog/how-to-use-bats-to-test-your-command-line-tools/
   * http://blog.spike.cx/post/60548255435/testing-bash-scripts-with-bats
 
 
